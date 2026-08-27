@@ -1,1 +1,9 @@
 /node_modules/
+
+# .htaccess da raiz do public_html no Hostinger (seagreen-sardine-891882) —
+# workaround de deploy porque esse plano não permite trocar o Document Root
+# pra public/, redireciona internamente pra lá. Específico do servidor, não
+# do projeto (o .htaccess real do projeto é public/.htaccess, esse continua
+# versionado normalmente). Nunca deve ser criado/sobrescrito por um commit
+# daqui, senão um git pull no servidor apaga o redirecionamento.
+/.htaccess
