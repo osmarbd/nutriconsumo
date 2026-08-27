@@ -5,6 +5,12 @@ const props = defineProps({
   api: { type: Object, required: true },
 })
 
+// Vinculado via JS (não src literal) — vite.config.js deste projeto usa
+// publicDir:false, então um src="/assets/..." literal no template seria
+// transformado em import de módulo pelo @vitejs/plugin-vue e quebraria o
+// build (mesmo gotcha já documentado em area_restrita_tbca/Shell.vue).
+const logoUrl = '/assets/img/NutriConsumo_transparente.png'
+
 const emit = defineEmits(['logado'])
 
 const modo = ref('login')
@@ -45,8 +51,7 @@ async function enviar() {
   <div class="d-flex align-items-center justify-content-center" style="min-height: 100%;">
     <div style="width: 100%; max-width: 420px;">
       <div class="text-center mb-3">
-        <i class="bi bi-basket2-fill" style="font-size: 2.5rem; color: #198754;"></i>
-        <h4 class="fw-semibold mt-1">NutriConsumo</h4>
+        <img :src="logoUrl" alt="NutriConsumo" style="max-width: 260px; width: 100%;" />
       </div>
       <div class="card shadow-sm">
         <div class="card-body p-4">
