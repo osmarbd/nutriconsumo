@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { criarApi, salvarToken, limparToken, temToken } from './api.js'
 import Login from './Login.vue'
 import Dashboard from './Dashboard.vue'
+import TrocarSenhaObrigatoria from './TrocarSenhaObrigatoria.vue'
 
 const props = defineProps({
   apiBase: { type: String, required: true },
@@ -39,11 +40,21 @@ function sair() {
   usuario.value = null
 }
 
+function aoTrocarSenhaObrigatoria(usuarioAtualizado) {
+  usuario.value = usuarioAtualizado
+}
+
 onMounted(carregarUsuario)
 </script>
 
 <template>
   <div v-if="carregando" class="text-center text-muted py-5">Carregando...</div>
   <Login v-else-if="!usuario" :api="api" @logado="aoLogar" />
+  <TrocarSenhaObrigatoria
+    v-else-if="usuario.deve_trocar_senha"
+    :api="api"
+    @alterada="aoTrocarSenhaObrigatoria"
+    @sair="sair"
+  />
   <Dashboard v-else :api="api" :usuario="usuario" @sair="sair" />
 </template>
