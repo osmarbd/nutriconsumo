@@ -5,11 +5,24 @@
 -- sem duplicar esses cadastros. Os dados da TBCA (br_t_alimentos/br_t_nutrientes)
 -- não são alterados por este projeto — apenas lidos.
 
+-- `tipo`/`ativo`/`deve_trocar_senha` adicionados em 2026-09-01 (mesmo padrão
+-- de br_t_users/t_lf_users): 'admin' acessa Administração > Usuários
+-- (NcUsuariosController, atrás de NcAdminMiddleware) pra ativar/desativar
+-- pesquisadores e resetar senha; 'user' é o pesquisador comum (cadastro
+-- público via NcAuthController::register continua existindo, só não define
+-- tipo/ativo/deve_trocar_senha explicitamente — usa os DEFAULT). Um reset
+-- administrativo de senha sempre marca deve_trocar_senha=1 (ver
+-- NcUser::atualizarSenha), forçando a troca no próximo login via
+-- TrocarSenhaObrigatoria.vue; a troca feita pelo próprio usuário
+-- (NcUser::atualizarSenhaPropria) sempre zera a flag de novo.
 CREATE TABLE IF NOT EXISTS t_nc_users (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   nome VARCHAR(150) NOT NULL,
   email VARCHAR(150) NOT NULL,
   password VARCHAR(255) NOT NULL,
+  tipo ENUM('admin','user') NOT NULL DEFAULT 'user',
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  deve_trocar_senha TINYINT(1) NOT NULL DEFAULT 0,
   instituicao VARCHAR(150) NULL,
   created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

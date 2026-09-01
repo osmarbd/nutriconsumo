@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { iniciais } from './utils.js'
 
 const props = defineProps({
@@ -9,13 +9,53 @@ const props = defineProps({
 
 const emit = defineEmits(['navegar', 'sair'])
 
-const MENU = [
+const ehAdmin = computed(() => props.usuario.tipo === 'admin')
+
+const MENU = computed(() => [
   { chave: 'inicio', label: 'Início', icone: 'bi-house-door' },
   { chave: 'recordatorios', label: 'Recordatórios alimentares', icone: 'bi-clipboard2-pulse' },
   { chave: 'entrevistados', label: 'Entrevistados', icone: 'bi-people' },
-]
+  ...(ehAdmin.value
+    ? [
+        {
+          label: 'Administração',
+          icone: 'bi-gear',
+          submenu: [{ chave: 'usuarios', label: 'Usuários' }],
+        },
+      ]
+    : []),
+])
 
-const tituloSecao = computed(() => MENU.find((item) => item.chave === props.secaoAtiva)?.label ?? '')
+function achar(chave, itens = MENU.value) {
+  for (const item of itens) {
+    if (item.chave === chave) return item
+    if (item.submenu) {
+      const encontrado = item.submenu.find((sub) => sub.chave === chave)
+      if (encontrado) return encontrado
+    }
+  }
+  return null
+}
+
+const tituloSecao = computed(() => achar(props.secaoAtiva)?.label ?? '')
+
+// Grupos com submenu abrem sozinhos quando a seção ativa é um dos filhos, e
+// também podem ser abertos/fechados manualmente clicando no cabeçalho.
+const abertos = ref(new Set())
+
+function grupoAberto(item) {
+  return abertos.value.has(item.label) || (item.submenu?.some((sub) => sub.chave === props.secaoAtiva) ?? false)
+}
+
+function alternarGrupo(item) {
+  const novo = new Set(abertos.value)
+  if (grupoAberto(item)) {
+    novo.delete(item.label)
+  } else {
+    novo.add(item.label)
+  }
+  abertos.value = novo
+}
 
 // Vinculado via JS (não src literal) — vite.config.js deste projeto usa
 // publicDir:false, então um src="/assets/..." literal no template seria
@@ -40,16 +80,40 @@ const logoUrl = '/assets/img/NutriConsumo_sidebar.png'
       </div>
 
       <nav class="nav flex-column nc-nav">
-        <a
-          v-for="item in MENU"
-          :key="item.chave"
-          href="javascript:void(0)"
-          class="nav-link d-flex align-items-center gap-2"
-          :class="{ active: secaoAtiva === item.chave }"
-          @click="emit('navegar', item.chave)"
-        >
-          <i class="bi" :class="item.icone"></i> {{ item.label }}
-        </a>
+        <template v-for="item in MENU" :key="item.chave || item.label">
+          <a
+            v-if="!item.submenu"
+            href="javascript:void(0)"
+            class="nav-link d-flex align-items-center gap-2"
+            :class="{ active: secaoAtiva === item.chave }"
+            @click="emit('navegar', item.chave)"
+          >
+            <i class="bi" :class="item.icone"></i> {{ item.label }}
+          </a>
+
+          <template v-else>
+            <a
+              href="javascript:void(0)"
+              class="nav-link d-flex align-items-center gap-2"
+              @click="alternarGrupo(item)"
+            >
+              <i class="bi" :class="item.icone"></i> {{ item.label }}
+              <i class="bi ms-auto small" :class="grupoAberto(item) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+            </a>
+            <div v-show="grupoAberto(item)" class="nc-submenu">
+              <a
+                v-for="sub in item.submenu"
+                :key="sub.chave"
+                href="javascript:void(0)"
+                class="nav-link d-flex align-items-center gap-2"
+                :class="{ active: secaoAtiva === sub.chave }"
+                @click="emit('navegar', sub.chave)"
+              >
+                {{ sub.label }}
+              </a>
+            </div>
+          </template>
+        </template>
       </nav>
     </aside>
 
@@ -64,6 +128,17 @@ const logoUrl = '/assets/img/NutriConsumo_sidebar.png'
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><span class="dropdown-item-text text-muted small">{{ usuario.email }}</span></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a
+                class="dropdown-item"
+                href="javascript:void(0)"
+                :class="{ active: secaoAtiva === 'configuracoes' }"
+                @click="emit('navegar', 'configuracoes')"
+              >
+                <i class="bi bi-gear-wide-connected me-2"></i>Configurações
+              </a>
+            </li>
             <li><hr class="dropdown-divider" /></li>
             <li><a class="dropdown-item" href="javascript:void(0)" @click="emit('sair')">Sair</a></li>
           </ul>
@@ -125,6 +200,11 @@ const logoUrl = '/assets/img/NutriConsumo_sidebar.png'
   color: #fff;
   background-color: rgba(255, 255, 255, 0.12);
   border-left-color: #7ce38b;
+}
+
+.nc-submenu .nav-link {
+  padding-left: 2.75rem;
+  font-size: 0.9rem;
 }
 
 .nc-avatar {

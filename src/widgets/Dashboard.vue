@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import Shell from './Shell.vue'
 import RecordatorioList from './RecordatorioList.vue'
 import EntrevistadoList from './EntrevistadoList.vue'
+import Configuracoes from './Configuracoes.vue'
+import AdminUsuarios from './AdminUsuarios.vue'
 
 const props = defineProps({
   api: { type: Object, required: true },
@@ -11,7 +13,7 @@ const props = defineProps({
 
 defineEmits(['sair'])
 
-const secaoAtiva = ref('inicio') // 'inicio' | 'recordatorios' | 'entrevistados'
+const secaoAtiva = ref('inicio') // 'inicio' | 'recordatorios' | 'entrevistados' | 'configuracoes' | 'usuarios'
 
 // Vinculado via JS (não como src literal no template) porque o vite.config.js
 // deste projeto usa publicDir:false — um src="/assets/..." literal seria
@@ -33,5 +35,9 @@ const logoUrl = '/assets/img/NutriConsumo.png'
     <RecordatorioList v-else-if="secaoAtiva === 'recordatorios'" :api="api" :usuario="usuario" />
 
     <EntrevistadoList v-else-if="secaoAtiva === 'entrevistados'" :api="api" />
+
+    <Configuracoes v-else-if="secaoAtiva === 'configuracoes'" :api="api" :usuario="usuario" />
+
+    <AdminUsuarios v-else-if="secaoAtiva === 'usuarios'" :api="api" />
   </Shell>
 </template>
